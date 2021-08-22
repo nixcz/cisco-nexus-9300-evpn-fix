@@ -11,9 +11,13 @@ Same message will occur when:
 If MAC address collision will happen in you VxLAN/EVPN fabric for any reason your VTEP will report this log message as per RFC:
 
 For GX:
+...
   "%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC <MAC> in topology: <VLANID> already present as remote static"
+...
 For FX2:
+...
   "%L2RIB-2-L2RIB_LOCAL_CONFIG_STATIC_MAC_PRESENT_AS_REMOTE_STATIC: Locally configured static MAC <MAC> in topology: <VLANID> already present as remote static"
+...
 
 These cryptic messages are saying: "Hey, I've just seen MAC locally which is learned as secure (on secured port) on another remote VTEP". 
 
