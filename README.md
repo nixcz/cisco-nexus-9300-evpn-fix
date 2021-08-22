@@ -58,7 +58,18 @@ Legend:
 G    -     b08b.d025.dd77   static   -         F      F    sup-eth1(R)
 ```  
 
-  **Remote MAC 00e0.4c3d.269f learned locally and stay learned until this record is manually cleared.**
+  **Remote MAC 00e0.4c3d.269f learned locally and stays learned until this record is manually cleared.**
   
   
+# Solution
+  Unfortunately there is no way, how to disable MAC address learning on Cisco Nexus 9300. Even MAC ACL doesn't prevent Nexus from learning MACs on port. The only solution we have found so far is to run own Python script on all VTEPs. This script is triggered using Nexus's event manager and will issue a command "clear mac address-table dynamic address {mac} vlan {vlan}" for earch MAC in collision.
   
+# Installation
+  1) copy n9kl2routeclear.py to a bootflash: using scp
+  2) add EEM to running-configuration
+``` 
+event manager applet test
+  event syslog pattern "%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC"
+  action 1 cli python3 bootflash:///n9kl2routeclear.py
+```
+
