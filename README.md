@@ -42,8 +42,9 @@ G    -     b08b.d025.dd77   static   -         F      F    sup-eth1(R)
   
   00e0.4c3d.269f -> is learned remotely via nve1 which is correct.
   
-MAC collision observed  
+**MAC collision observed**
   2021 Aug 22 16:27:19 GX %L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC 00e0.4c3d.269f in topology: 999 already present as remote static
+
 
 ```
 GX# sh mac address-table 
@@ -57,7 +58,7 @@ Legend:
 G    -     b08b.d025.dd77   static   -         F      F    sup-eth1(R)
 ```  
 
-  Remote MAC 00e0.4c3d.269f learned locally and stay learned until this record is manually clread.
+  **Remote MAC 00e0.4c3d.269f learned locally and stay learned until this record is manually cleared.**
   
   
   
