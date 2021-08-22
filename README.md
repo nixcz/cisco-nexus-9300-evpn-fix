@@ -2,7 +2,7 @@
 Script for Nexus 9300 fixing remote static MACs learned locally
 
 # Problem description
-Cisco Nexus 9300 doesn't support "feature port-security" in combination with VxLAN/EVPN as of yet. We have discovered few related issues one of which can lead to blackholing a traffic. We believe port-security feature will "secure" learned MAC addresses within VxLAN/EVPN fabric as similar way as if you would configure static MAC records on the switch.
+Cisco Nexus 9300 doesn't support "feature port-security" in combination with VxLAN/EVPN as of yet. We have discovered a few related issues one of which can lead to blackholing a traffic. We believe the port-security feature will "secure" learned MAC addresses within VxLAN/EVPN fabric in a similar way as if you would configure static MAC records on the switch.
 
 Same message will occur when:
   a) remote port is configured with port security
@@ -20,7 +20,7 @@ For FX2:
 
 These cryptic messages are saying: "Hey, I've just seen MAC locally which is learned as secure (on secured port) on another remote VTEP". 
 
-**Local VTEP will learn newly seen MAC on local port with higher priority and this record will never expire, until this is cleared manually.**
+**Local VTEP will learn a newly seen MAC on local port with higher priority and this record will never expire, until this is cleared manually.**
 
 
  Diagram
@@ -65,7 +65,7 @@ G    -     b08b.d025.dd77   static   -         F      F    sup-eth1(R)
   
   
 # Solution
-  Unfortunately there is no way, how to disable MAC address learning on Cisco Nexus 9300. Even MAC ACL doesn't prevent Nexus from learning MACs on port. The only solution we have found so far is to run own Python script on all VTEPs. This script is triggered using Nexus's event manager and will issue a command "clear mac address-table dynamic address {mac} vlan {vlan}" for earch MAC in collision.
+  Unfortunately there is no way to disable MAC address learning on Cisco Nexus 9300. Even MAC ACL doesn't prevent Nexus from learning MACs on port. The only solution we have found so far is to run our own Python script on all VTEPs. This script is triggered using Nexus's event manager and will issue a command "clear mac address-table dynamic address {mac} vlan {vlan}" for each MAC in collision.
   
 # Installation
   1) copy n9kl2routeclear.py to a bootflash: using scp
