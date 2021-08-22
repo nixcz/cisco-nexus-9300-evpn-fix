@@ -20,7 +20,7 @@ These cryptic messages are saying: "Hey, I've just seen MAC locally which is lea
 **Local VTEP will learn newly seen MAC on local port with higher priority and this record will never expire, until this is cleared manually.**
 
 
- 
+ ![plot](./diagram_vxlan.png)
 
 
   
