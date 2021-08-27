@@ -77,4 +77,4 @@ event manager applet test
   event syslog pattern "%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC"
   action 1 cli python3 bootflash:///n9kl2routeclear.py
 ```
-  3) Dry-Run - It is recommended run with "dry_run=True" manually in order to skip all historical records in log. Those will be skipped by dry-run (not really clearing MAC address table). Srcipt will create init files where last proccessed position is stored. **Don't forget to change back to "dry-run=False"!**
+  3) Dry-Run - It is recommended run with "dry_run=True" manually in order to skip all historical records in log. Those will be skipped by dry-run (not really clearing MAC address table). Script will create init files where last proccessed position is stored and only new records going to be proccessed. If you don't do dry-run with first run, script will proccess all log lines with it's first call and will clear MAC address table with all historical occurences of the message! **Don't forget to change back to "dry-run=False"!**
