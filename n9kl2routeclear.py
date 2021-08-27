@@ -54,6 +54,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 debug = True
+dry_run = False
 statefile='/volatile/macconflict.json'
 logfile = '/log/messages'
 lockfile = '/volatile/macconflict.lock'
@@ -189,9 +190,12 @@ def main():
     clearset.add((mac, vlan))
 
   for mac, vlan in clearset:
-    d(f"Clearing MAC {mac} for vlan {vlan}")
-    res = cisco.nxos_cli.nxcli(f"clear mac address-table dynamic address {mac} vlan {vlan}")
-    d(f"CLI call result: {res}")
+    if dry_run:
+      d(f"Dry run: Clearing MAC {mac} for vlan {vlan}")
+    else:
+      d(f"Clearing MAC {mac} for vlan {vlan}")
+      res = cisco.nxos_cli.nxcli(f"clear mac address-table dynamic address {mac} vlan {vlan}")
+      d(f"CLI call result: {res}")
 
   savestate(state)
   d(f"script finished")
