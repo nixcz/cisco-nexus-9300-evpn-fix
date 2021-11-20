@@ -145,7 +145,7 @@ def parselog(state, filename=logfile):
       if m:
         lid, ltime, mac, vlan = m.groups()    
         ts = datetime.datetime.strptime(ltime, "%Y %b %d %H:%M:%S").timestamp()
-        if (ts > state.get('lasttime', 0)):
+        if (ts >= state.get('lasttime', 0)-10):
           yield (lid, ltime, ts, mac, vlan)
           state['lasttime'] = ts
 
