@@ -76,11 +76,11 @@ import hashlib
 def d(msg):
   if debug:
     try:
-      bfn = sys.argv[0].split('/')[0].strip()
+      bfn = sys.argv[0].split('/')[-1].strip()
     except:
-      bfn = '?'
+      bfn = '???'
 
-    syslog.syslog(syslog.LOG_ERR, f"{bfn} ({os.getpid()}) msg")
+    syslog.syslog(syslog.LOG_ERR, f"{bfn} ({os.getpid()}) {msg}")
     print(msg)
 
   if True:
