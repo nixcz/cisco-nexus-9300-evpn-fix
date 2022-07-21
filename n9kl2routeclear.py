@@ -127,7 +127,7 @@ def savestate(state, filename=statefile):
 
 #0c6 2021 Aug  2 14:02:30 GX %L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC 00e0.4c3d.269f in topology: 999 already present as remote static
 
-conflictre = re.compile(r"([0-9a-z]+)\s+([0-9]+\s+[A-Za-z]+\s+[0-9]+\s+[0-9:]+)\s+[^\s]+\s+%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC\s+([0-9a-f\.]+)\s+in topology:\s+([0-9]+)\s+already present as remote static.*")
+conflictre = re.compile(r"([0-9a-z]+)\s+([0-9]+\s+[A-Za-z]+\s+[0-9]+\s+[0-9:\.]+)\s+[^\s]+\s+%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC\s+([0-9a-f\.]+)\s+in topology:\s+([0-9]+)\s+already present as remote static.*")
 
 def parselog(state, filename=logfile):
   with open(filename, 'r') as fd:
