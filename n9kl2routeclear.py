@@ -125,9 +125,85 @@ def savestate(state, filename=statefile):
 
 
 
-#0c6 2021 Aug  2 14:02:30 GX %L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC 00e0.4c3d.269f in topology: 999 already present as remote static
+#0c6 2022 Jul 21 16:00:18.558 NIX4-C3 %L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC 6821.5f83.986e in topology: 10 already present as remote static
+#There is Cisco specific string on beginning of each log record - in this case it is '#0c6'
 
-conflictre = re.compile(r"([0-9a-z]+)\s+([0-9]+\s+[A-Za-z]+\s+[0-9]+\s+[0-9:]+)\s+[^\s]+\s+%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC\s+([0-9a-f\.]+)\s+in topology:\s+([0-9]+)\s+already present as remote static.*")
+conflictre = re.compile(r"([0-9a-z]+)\s+([0-9]+\s+[A-Za-z]+\s+[0-9]+\s+[0-9:\.]+)\s+[^\s]+\s+%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC: Locally learnt MAC\s+([0-9a-f\.]+)\s+in topology:\s+([0-9]+)\s+already present as remote static.*")
+
+def parselog(state, filename=logfile):
+  with open(filename, 'r') as fd:
+    fls = hashlib.md5(fd.readline().encode()).hexdigest()
+
+    fd.seek(0, os.SEEK_END)
+    if state.get('offset', 0) < fd.tell() and state.get('firstlinesum', '') == fls:
+      fd.seek(state.get('offset', 0))
+    else:
+      fd.seek(0)
+    d(f"Reading the log {filename} from offset {fd.tell()}")
+
+    for l in fd.readlines():
+      m = conflictre.match(l.strip())
+      if m:
+        lid, ltime, mac, vlan = m.groups()    
+        ts = datetime.datetime.strptime(ltime, "%Y %b %d %H:%M:%S").timestamp()
+        if (ts >= state.get('lasttime', 0)-10):
+          yield (lid, ltime, ts, mac, vlan)
+          state['lasttime'] = ts
+
+    state['offset'] = fd.tell()
+    state['firstlinesum'] = fls
+    d(f"The log file {filename} leaved at offset {state['offset']}")
+
+
+def main():
+  d(f"script running")
+
+  # The critical section is the waiting: We expect the EEM to trigger one or multiple
+  # times in a short burst, in this case we run the script just once; after the waiting
+  # time we first unlock, so another instance of the script can be started while we
+  # read the log file and clear the conflicts, but the new instance will go to waiting
+  # state first and we assume that the waiting period is going to be longer that log
+  # parsing and cleanup.
+  # If the conflict for one or more MAC addresses persists, we expect to see the
+  # same log message over and over just after we clear the MAC record. It is fine,
+  # we let the script run once in waiting mode while the last instance that cleared
+  # the offending MAC(s) few moments ago is finishing. This should lead to a new
+  # attempt to clear the offending MAC address(es) after the predefined delay over and
+  # over again until the conflict is resolved.
+
+  lfh = lock()
+  if not lfh:
+    d("script halted due to locking")
+    sys.exit(1)
+
+  d(f"script waiting for timer ({initdelay} sec)")
+  time.sleep(initdelay)
+  unlock(lfh)
+
+  # following code is not the critical part, any concurrency hazard can cause more
+  # executions of the resulting Cisco CLI call, so it is "at-least-once" execution,
+  # which is what we desire
+  state = loadstate()
+
+  clearset = set()
+  for lid, ltime, ts, mac, vlan in parselog(state):
+    d(f"Considering MAC for record: time={ltime} ({ts}), mac={mac} vlan={vlan}")
+    clearset.add((mac, vlan))
+
+  for mac, vlan in clearset:
+    if dry_run:
+      d(f"Dry run: Clearing MAC {mac} for vlan {vlan}")
+    else:
+      d(f"Clearing MAC {mac} for vlan {vlan}")
+      res = cisco.nxos_cli.nxcli(f"clear mac address-table dynamic address {mac} vlan {vlan}")
+      d(f"CLI call result: {res}")
+
+  savestate(state)
+  d(f"script finished")
+
+if __name__ == '__main__':
+  main()
+
 
 def parselog(state, filename=logfile):
   with open(filename, 'r') as fd:
