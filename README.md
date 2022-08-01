@@ -1,14 +1,14 @@
 # cisco-nexus-9300-evpn-fix
-Script for Nexus 9300 fixing remote static MACs learned locally
+Script for Nexus 9300 fixing remote static MACs learned locally.
 
 # Problem description
-Cisco Nexus 9300 doesn't support "feature port-security" in combination with VxLAN/EVPN as of yet. We have discovered a few related issues one of which can lead to blackholing a traffic. We believe the port-security feature will "secure" learned MAC addresses within VxLAN/EVPN fabric in a similar way as if you would configure static MAC records on the switch.
+Cisco Nexus 9300 doesn't support "feature port-security" in combination with VxLAN/EVPN. We have discovered a few related issues, one of which can lead to blackholing traffic. We believe the port-security feature will "secure" learned MAC addresses within VxLAN/EVPN fabric as if you would configure static MAC records on the switch.
 
-Same message will occur when:
+The same message will occur when:
   a) remote port is configured with port security
-  b) remote MAC address is configured as static MAC entry (e.g. mac address-table static 0000.0000.0000 vlan 999 interface Ethernet1/48)
+  b) remote MAC address is configured as static MAC entry (e.g., mac address-table static 0000.0000.0000 vlan 999 interface Ethernet1/48)
 
-If MAC address collision will happen in you VxLAN/EVPN fabric for any reason your VTEP will report this log message as per RFC:
+If MAC address collision happens in your VxLAN/EVPN fabric for any reason, your VTEP will report this log message as per RFC:
 
 For GX:
 
@@ -18,9 +18,9 @@ For FX2:
 
   %L2RIB-2-L2RIB_LOCAL_CONFIG_STATIC_MAC_PRESENT_AS_REMOTE_STATIC: Locally configured static MAC <MAC> in topology: <VLANID> already present as remote static
 
-These cryptic messages are saying: "Hey, I've just seen MAC locally which is learned as secure (on secured port) on another remote VTEP". 
+These cryptic messages are saying: "Hey, I've just seen MAC locally, which is learned as secure (on the secured port) on another remote VTEP". 
 
-**Local VTEP will learn a newly seen MAC on local port with higher priority and this record will never expire, until this is cleared manually.**
+**Local VTEP will learn a newly seen MAC on the local port with higher priority, and this record will never expire until this is cleared manually.**
 
 
  Diagram
@@ -63,11 +63,11 @@ Legend:
 G    -     b08b.d025.dd77   static   -         F      F    sup-eth1(R)
 ```  
 
-  **Remote MAC 00e0.4c3d.269f learned locally and stays learned until this record is manually cleared.**
+  **Remote MAC 00e0.4c3d.269f learned locally and stayed learned until this record is manually cleared.**
   
   
 # Solution
-  Unfortunately there is no way to disable MAC address learning on Cisco Nexus 9300. Even MAC ACL doesn't prevent Nexus from learning MACs on port. The only solution we have found so far is to run our own Python script on all VTEPs. This script is triggered using Nexus's event manager and will issue a command "clear mac address-table dynamic address {mac} vlan {vlan}" for each MAC in collision.
+  Unfortunately, there is no way to disable MAC address learning on Cisco Nexus 9300. Even MAC ACL doesn't prevent Nexus from learning MACs on the port. The only solution we have found so far is to run our own Python script on all VTEPs. This script is triggered using Nexus's event manager and will issue a command "clear mac address-table dynamic address {mac} vlan {vlan}" for each MAC in a collision.
   
 # Installation
   1) copy n9kl2routeclear.py to a bootflash: using scp
@@ -75,6 +75,5 @@ G    -     b08b.d025.dd77   static   -         F      F    sup-eth1(R)
 ``` 
 event manager applet test
   event syslog pattern "%L2RIB-2-L2RIB_LOCAL_LEARNT_MAC_PRESENT_AS_REMOTE_STATIC"
-  action 1 cli python3 bootflash:///n9kl2routeclear.py
+  action 1 cli python3 bootflash:///n9kl2routeclear.py $_syslog_msg
 ```
-  3) Dry-Run - It is recommended run with "dry_run=True" manually in order to skip all historical records in log. Those will be skipped by dry-run (not really clearing MAC address table). Script will create init files where last proccessed position is stored and only new records going to be proccessed. If you don't do dry-run with first run, script will proccess all log lines with it's first call and will clear MAC address table with all historical occurences of the message! **Don't forget to change back to "dry-run=False"!**
